@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.0)
+project(Magic)
+find_package(OpenCV REQUIRED)
+add_executable(Magic magic.cpp)
+target_link_libraries(Magic ${OpenCV_LIBS})
