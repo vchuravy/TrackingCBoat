@@ -1,8 +1,4 @@
-#include <stdio.h>
-#include <iostream>
-#include <string>
-#include <opencv2/opencv.hpp>
-#include <opencv2/highgui/highgui.hpp>
+#include "magic.h"
 
 using namespace cv;
 
@@ -96,10 +92,10 @@ int main(int argc, char* argv[]){
     }
   }
 
-  destroyWindow("image");
-  destroyWindow("ROI");
-
   waitKey(1);
+  destroyAllWindows();
+  waitKey(1);
+
   if(!select_flag){
     rect = Rect(0,0,img.cols, img.rows);
   }
@@ -114,16 +110,32 @@ int main(int argc, char* argv[]){
   vector<int> imageout_params;
   imwrite(output + "/bg.tiff", background, imageout_params);
 
-  for(int i = 0; i <= frames;i++){
+  namedWindow("live", CV_WINDOW_AUTOSIZE );
+
+  std::vector<Point2i> points;
+  Point2f center;
+  float radius;
+
+  std::ofstream fs (output + "/positions.csv", std::ofstream::out);
+  fs << "Frame,Time,Radius,x,y\n";
+
+  for(int i = 0; i <= frames-1;i++){
     cap >> in;
     temp = in(rect);
     cvtColor(temp, dst, CV_RGB2GRAY, 0);
     absdiff(dst, background, temp);
-    threshold(temp, dst, 30, 255, THRESH_BINARY_INV);
-    imwrite(output + "/test-"+ std::to_string(i)+".tiff", dst, imageout_params);
+    threshold(temp, dst, 30, 255, THRESH_BINARY);
+    imshow("live", dst);
+
+    points.clear();
+    findNonZero(dst, points);
+    minEnclosingCircle(points, center, radius);
+
+    fs << i <<","<< i/fps <<","<< radius <<","<< center.x <<","<< center.y << "\n";
+    std::cout << "\r" << i << "/" << frames;
+    // imwrite(output + "/test-"+ std::to_string(i)+".tiff", dst, imageout_params);
   }
 
-  // Idea:
-  // threshold(InputArray src, OutputArray dst, double thresh, double maxval, int type)
-  // type = THRESH_BINARY_INV
+  fs << std::endl;
+  fs.close();
 }
