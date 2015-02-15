@@ -110,8 +110,6 @@ int main(int argc, char* argv[]){
   vector<int> imageout_params;
   imwrite(output + "/bg.tiff", background, imageout_params);
 
-  namedWindow("live", CV_WINDOW_AUTOSIZE );
-
   std::vector<Point2i> points;
   Point2f center;
   float radius;
@@ -126,7 +124,6 @@ int main(int argc, char* argv[]){
     cvtColor(temp, dst, CV_RGB2GRAY, 0);
     absdiff(dst, background, temp);
     threshold(temp, dst, 30, 255, THRESH_BINARY);
-    imshow("live", dst);
 
     points.clear();
     findNonZero(dst, points);
