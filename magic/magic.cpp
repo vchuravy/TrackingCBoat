@@ -58,7 +58,6 @@ int main(int argc, char* argv[]){
     skip_frames = std::atoi(argv[3]);
   }
 
-
   VideoCapture cap(argv[1]); // load the video
   if(!cap.isOpened())  // check if we succeeded
         return -1;
@@ -113,6 +112,7 @@ int main(int argc, char* argv[]){
 
   //Set image parameter
   vector<int> imageout_params;
+  imwrite(output + "/bg.tiff", background, imageout_params);
 
   for(int i = 0; i <= frames;i++){
     cap >> in;
