@@ -88,26 +88,46 @@ int main(int argc, char* argv[]){
     //   printf("Key pressed %d\n", k);
     // }
     if (k == 27){ //ESC
+        destroyAllWindows();
+        waitKey(1);
         break;
     }
   }
-
-  waitKey(1);
-  destroyAllWindows();
-  waitKey(1);
 
   if(!select_flag){
     rect = Rect(0,0,img.cols, img.rows);
   }
 
   // Background
-  // TODO: support loading from file
   temp = in(rect);
   Mat background;
   cvtColor(temp, background, CV_RGB2GRAY);
 
+  vector<Vec3f> circles;
+
+  /// Apply the Hough Transform to find the circles
+  HoughCircles(background, circles, CV_HOUGH_GRADIENT, 1, 100, 200, 100, 0, 0);
+
+  /// Draw the circles detected
+  for( size_t i = 0; i < circles.size(); i++ )
+  {
+      Point2f center(circles[i][0], circles[i][1]);
+      float radius = circles[i][2];
+      // circle center
+      circle(temp, center, 3, Scalar(0,255,0), -1, 8, 0 );
+      // circle outline
+      circle(temp, center, radius, Scalar(0,0,255), 3, 8, 0 );
+      printf("Circle %d with r=%f at x=%f, y=%f\n", i, radius, center.x, center.y);
+   }
+
+  imshow("image", temp);
+  waitKey(0);
+  destroyWindow("image");
+  waitKey(1);
+
   //Set image parameter
   vector<int> imageout_params;
+  imwrite(output + "/bg_circle.tiff", temp, imageout_params);
   imwrite(output + "/bg.tiff", background, imageout_params);
 
   std::vector<Point2i> points;
