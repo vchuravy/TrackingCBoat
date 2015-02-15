@@ -121,6 +121,7 @@ int main(int argc, char* argv[]){
 
   for(int i = 0; i <= frames-1;i++){
     cap >> in;
+    if(i > skip_frames) {
     temp = in(rect);
     cvtColor(temp, dst, CV_RGB2GRAY, 0);
     absdiff(dst, background, temp);
@@ -134,6 +135,7 @@ int main(int argc, char* argv[]){
     fs << i <<","<< i/fps <<","<< radius <<","<< center.x <<","<< center.y << "\n";
     std::cout << "\r" << i << "/" << frames;
     // imwrite(output + "/test-"+ std::to_string(i)+".tiff", dst, imageout_params);
+    }
   }
 
   fs << std::endl;
