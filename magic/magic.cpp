@@ -133,6 +133,7 @@ int main(int argc, char* argv[]){
   std::vector<Point2i> points;
   Point2f center;
   float radius;
+  int nonZero;
 
   std::ofstream fs (output + "/positions.csv", std::ofstream::out);
   fs << "Frame,Time,Radius,x,y\n";
@@ -146,11 +147,17 @@ int main(int argc, char* argv[]){
     threshold(temp, dst, 30, 255, THRESH_BINARY);
 
     points.clear();
-    if(countNonZero(dst) > 0) {
+    nonZero = countNonZero(dst);
+    if(nonZero > 0) {
       findNonZero(dst, points);
       minEnclosingCircle(points, center, radius);
 
-      fs << i <<","<< i/fps <<","<< radius <<","<< center.x <<","<< center.y << "\n";
+      if(nonZero/(M_PI * radius * radius) >= 0.3){
+        fs << i <<","<< i/fps <<","<< radius <<","<< center.x <<","<< center.y << "\n";
+      } else {
+        std::cerr << "\n" << i << ": Found point with r=" << radius << " but less than 30% of pixels are visible. c_p = " << nonZero << "\n";
+        imwrite(output + "/error-"+ std::to_string(i)+".tiff", dst, imageout_params);
+      }
     }
     std::cout << "\r" << i << "/" << frames;
     // imwrite(output + "/test-"+ std::to_string(i)+".tiff", dst, imageout_params);
