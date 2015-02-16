@@ -146,6 +146,7 @@ int main(int argc, char* argv[]){
     threshold(temp, dst, 30, 255, THRESH_BINARY);
 
     points.clear();
+    // if there is no non zero point this throws an exception.
     findNonZero(dst, points);
     minEnclosingCircle(points, center, radius);
 
