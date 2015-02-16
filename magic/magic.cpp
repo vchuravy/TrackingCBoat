@@ -106,7 +106,7 @@ int main(int argc, char* argv[]){
   vector<Vec3f> circles;
 
   /// Apply the Hough Transform to find the circles
-  HoughCircles(background, circles, CV_HOUGH_GRADIENT, 1, 100, 200, 100, 0, 0);
+  HoughCircles(background, circles, CV_HOUGH_GRADIENT, 1, 300, 200, 100, 0, 0);
 
   /// Draw the circles detected
   for( size_t i = 0; i < circles.size(); i++ )
@@ -146,11 +146,12 @@ int main(int argc, char* argv[]){
     threshold(temp, dst, 30, 255, THRESH_BINARY);
 
     points.clear();
-    // if there is no non zero point this throws an exception.
-    findNonZero(dst, points);
-    minEnclosingCircle(points, center, radius);
+    if(countNonZero(dst) > 0) {
+      findNonZero(dst, points);
+      minEnclosingCircle(points, center, radius);
 
-    fs << i <<","<< i/fps <<","<< radius <<","<< center.x <<","<< center.y << "\n";
+      fs << i <<","<< i/fps <<","<< radius <<","<< center.x <<","<< center.y << "\n";
+    }
     std::cout << "\r" << i << "/" << frames;
     // imwrite(output + "/test-"+ std::to_string(i)+".tiff", dst, imageout_params);
     }
