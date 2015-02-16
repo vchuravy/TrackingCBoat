@@ -5,20 +5,24 @@ using Gadfly
 
 df = readtable("out/positions.csv")
 
-μ_r = mean(df[:Radius])
-σ_r = std(df[:Radius])
+mad(X) = mad(X, median(X))
+mad(X, med) = median([abs(x - med) for x in X])
+
+median_r = median(df[:Radius])
+mad_r = mad(df[:Radius])
 
 # petri dish
-pR = 337.586273 #pixel
-px = 365.500000 #pixel
-py = 353.500000 #pixel
+pR = 512.349976  #pixel
+px = 533.500000 #pixel
+py = 531.500000 #pixel
 pDcm = 25 # cm
 cboatD = 0.3 #cm
-ratioCboat = μ_r/(0.5*cboatD)
-ratioPetri = pR/(0.5*pDcm)
+ratioCboat = median_r/(0.5*cboatD)
 
-rInfluence = 2.5
-rValid = 0.5(pDcm - 2rInfluence)*ratioPetri
+rInfluence = 3.5
+rValid = pR - rInfluence*ratioCboat
+
+checkValid(x, y) = radius(x, y) < rValid
 
 df[:x] = df[:x] - px 
 df[:y] = df[:y] - py
@@ -28,15 +32,12 @@ radius(x, y) = √((x)^2 + (y)^2)
 df[:r] = map(radius, df[:x], df[:y])
 df[:ϕ] = map((x, y) -> atan2(x,y), df[:x], df[:y])
 
-checkValid(x, y) = radius(x, y) < rValid
-df[:valid] = map(checkValid, df[:x], df[:y])
-
 # Remove all points that are probably bogus
 cond = μ_r - σ_r .<= df[:Radius] .<= μ_r + σ_r
-
 df = sub(df, cond)
-dfValid = sub(df, df[:valid])
 
+# remove all points that are in the influence of the border
+dfValid = sub(df, map(checkValid, df[:x], df[:y]))
 # plot(df, x = :x, y = :y)
 
 function v_a(df)
