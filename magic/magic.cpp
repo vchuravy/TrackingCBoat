@@ -73,7 +73,6 @@ int main(int argc, char* argv[]){
   imshow("image", temp);
   waitKey(0);
   destroyWindow("image");
-  waitKey(0);
 
   //Set image parameter
   std::vector<int> imageout_params;
@@ -102,7 +101,7 @@ int main(int argc, char* argv[]){
   double y;
 
   std::ofstream fs (output + "/positions.csv", std::ofstream::out);
-  fs << "Frame,Time,Area,x,y\n";
+  fs << "Frame,Time,Radius,x,y\n";
 
   for(int i = 0; i < frames-1;i++){
     cap >> in;
@@ -128,7 +127,7 @@ int main(int argc, char* argv[]){
           if(area/(M_PI * (0.5*w) * (0.5*h)) >= 0.3) {
             x = centers.at<double>(j,0);
             y = centers.at<double>(j,1);
-            fs << i <<","<< i/fps <<","<< area <<","<< x <<","<< y << "\n";
+            fs << i <<","<< i/fps <<","<< 0.25*(w+h) <<","<< x <<","<< y << "\n";
             // printf("%d: Found cc%d at x=%f y=%f ",i, j, x, y);
             // printf("with area=%d w=%d h=%d\n", area, w, h);
           }
