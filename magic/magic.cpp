@@ -90,11 +90,19 @@ int main(int argc, char* argv[]){
   background = Mat::zeros(background.rows, background.cols, CV_8UC1);
   temp.copyTo(background, mask ); // copy values of temp to background if mask is > 0.
 
-  std::vector<Point2i> points;
-  int nonZero;
+  int nLabels;
+  Mat labels(background.size(), CV_32S);
+  Mat stats, centers;
+
+  //stats
+  int area;
+  int w;
+  int h;
+  double x;
+  double y;
 
   std::ofstream fs (output + "/positions.csv", std::ofstream::out);
-  fs << "Frame,Time,Radius,x,y\n";
+  fs << "Frame,Time,Area,x,y\n";
 
   for(int i = 0; i <= frames-1;i++){
     cap >> in;
@@ -105,27 +113,26 @@ int main(int argc, char* argv[]){
     absdiff(dst, background, temp);
     threshold(temp, dst, 30, 255, THRESH_BINARY);
 
-    points.clear();
-    nonZero = countNonZero(dst);
-    if(nonZero > 0) {
-      findNonZero(dst, points);
-      
-      Point2f centerMass(0,0);
-      for(Point2i p : points){
-        centerMass.x += p.x;
-        centerMass.y += p.y;
-      }
-      centerMass.x /= points.size();
-      centerMass.y /= points.size();
+    nLabels = connectedComponentsWithStats(dst, labels, stats, centers, 8, CV_32S);
 
-      minEnclosingCircle(points, center, radius);
-
-      if(nonZero/(M_PI * radius * radius) >= 0.3){
-        fs << i <<","<< i/fps <<","<< radius <<","<< center.x <<","<< center.y << "\n";
-      } else {
-        std::cerr << "\n" << i << ": Found point with r=" << radius << " x=" << center.x << " y=" << center.y << " c_p = " << nonZero;
-        std::cerr << " center mass is x=" << centerMass.x << " y=" << centerMass.y << "\n";
-        imwrite(output + "/error-"+ std::to_string(i)+".tiff", dst, imageout_params);
+    // skip background i=0
+    for (int j=1; j< nLabels;j++) {
+      // get stats
+      area = stats.at<int>(j,CC_STAT_AREA);
+      if(area >= 20) {
+        w = stats.at<int>(j,CC_STAT_WIDTH);
+        h = stats.at<int>(j,CC_STAT_HEIGHT);
+        // w/h >= 0.7 && h/w >= 0.7 the bounding box of a circle is roughly a square.
+        if((h/ double(w)) >=0.7 && (w/ double(h)) >=0.7) {
+          // The bounding box contains an ellipse and the visible points should be at least 30% of that area.
+          if(area/(M_PI * (0.5*w) * (0.5*h)) >= 0.3) {
+            x = centers.at<double>(j,0);
+            y = centers.at<double>(j,1);
+            fs << i <<","<< i/fps <<","<< area <<","<< x <<","<< y << "\n";
+            // printf("%d: Found cc%d at x=%f y=%f ",i, j, x, y);
+            // printf("with area=%d w=%d h=%d\n", area, w, h);
+          }
+        }
       }
     }
     std::cout << "\r" << i << "/" << frames;
