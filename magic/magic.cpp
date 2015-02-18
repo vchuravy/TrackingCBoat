@@ -104,7 +104,7 @@ int main(int argc, char* argv[]){
   std::ofstream fs (output + "/positions.csv", std::ofstream::out);
   fs << "Frame,Time,Area,x,y\n";
 
-  for(int i = 0; i <= frames-1;i++){
+  for(int i = 0; i < frames-1;i++){
     cap >> in;
     if(i > skip_frames) {
     temp = Mat::zeros(background.rows, background.cols, CV_8UC1);
