@@ -107,6 +107,10 @@ int main(int argc, char* argv[]){
   for(int i = 0; i < frames-1;i++){
     cap >> in;
     if(i > skip_frames) {
+      if(in.size() != background.size()){
+        std::cerr << "Frame " << i << "is not valid\n";
+        continue;
+      }
     temp = Mat::zeros(background.rows, background.cols, CV_8UC1);
     in.copyTo(temp, mask ); // copy values of in to temp if mask is > 0.
     cvtColor(temp, dst, COLOR_RGB2GRAY, 0);
