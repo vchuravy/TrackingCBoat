@@ -35,12 +35,15 @@ radius(x, y) = √((x)^2 + (y)^2)
 df[:r] = map(radius, df[:x], df[:y])
 df[:ϕ] = map((x, y) -> atan2(x,y), df[:x], df[:y])
 
+dfOld = df
+print("Recorded $(size(df, 1)) data points")
 # Remove all points that are probably bogus
 cond = μ_r - σ_r .<= df[:Radius] .<= μ_r + σ_r
 df = sub(df, cond)
-
+print(" $(size(df, 1)) of them are valid and")
 # remove all points that are in the influence of the border
 dfValid = sub(df, map(checkValid, df[:x], df[:y]))
+println(" $(size(dfValid, 1)) are outside the influence of the boundary.")
 # plot(df, x = :x, y = :y)
 
 function v_a(df)
