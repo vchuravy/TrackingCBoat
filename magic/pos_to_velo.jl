@@ -1,4 +1,5 @@
 using DataFrames
+using JSON
 
 Base.convert(::Type{Float64}, ::NAtype) = NaN
 using Gadfly
@@ -12,9 +13,11 @@ median_r = median(df[:Radius])
 mad_r = mad(df[:Radius])
 
 # petri dish
-pR = 512.349976  #pixel
-px = 533.500000 #pixel
-py = 531.500000 #pixel
+js = JSON.parsefile("out/petriDish.json")
+petriDish = js["Circle 0"]
+pR = petriDish["radius"]
+px = petriDish["x"]
+py = petriDish["y"]
 pDcm = 25 # cm
 cboatD = 0.3 #cm
 ratioCboat = median_r/(0.5*cboatD)

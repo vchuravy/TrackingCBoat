@@ -51,6 +51,7 @@ int main(int argc, char* argv[]){
 
   /// Draw the circles detected
   std::ofstream fsJs (output + "/petriDish.json", std::ofstream::out);
+  fsJs << "{\n";
 
   for( size_t i = 0; i < circles.size(); i++ )
   {
