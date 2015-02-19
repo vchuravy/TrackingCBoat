@@ -38,7 +38,7 @@ df[:ϕ] = map((x, y) -> atan2(x,y), df[:x], df[:y])
 dfOld = df
 print("Recorded $(size(df, 1)) data points")
 # Remove all points that are probably bogus
-cond = μ_r - σ_r .<= df[:Radius] .<= μ_r + σ_r
+cond = median_r - mad_r .<= df[:Radius] .<= median_r + mad_r
 df = sub(df, cond)
 print(" $(size(df, 1)) of them are valid and")
 # remove all points that are in the influence of the border
