@@ -53,10 +53,13 @@ int main(int argc, char* argv[]){
   std::ofstream fsJs (output + "/petriDish.json", std::ofstream::out);
   fsJs << "{\n";
 
+  Point2f center;
+  float radius;
+
   for( size_t i = 0; i < circles.size(); i++ )
   {
-      Point2f center(circles[i][0], circles[i][1]);
-      float radius = circles[i][2];
+      center = Point2f(circles[i][0], circles[i][1]);
+      radius = circles[i][2];
       // circle center
       circle(temp, center, 3, Scalar(0,255,0), -1, 8, 0 );
       // circle outline
@@ -81,8 +84,8 @@ int main(int argc, char* argv[]){
   imwrite(output + "/bg.tiff", background, imageout_params);
 
   //Create mask based on circles[0]
-  Point2f center(circles[0][0], circles[0][1]);
-  float radius = circles[0][2];
+  center = Point2f(circles[0][0], circles[0][1]);
+  radius = circles[0][2];
   Mat mask = Mat::zeros(background.rows, background.cols, CV_8UC1);
   circle(mask, center, radius, Scalar(255,255,255), -1, 8, 0 ); //-1 means filled
 
@@ -94,12 +97,13 @@ int main(int argc, char* argv[]){
   Mat labels(background.size(), CV_32S);
   Mat stats, centers;
 
+  // Points in bb
+  std::vector<Point2i> points;
+
   //stats
   int area;
   int w;
   int h;
-  double x;
-  double y;
 
   std::ofstream fs (output + "/positions.csv", std::ofstream::out);
   fs << "Frame,Time,Radius,x,y\n";
@@ -118,7 +122,7 @@ int main(int argc, char* argv[]){
     threshold(temp, dst, 30, 255, THRESH_BINARY);
 
     nLabels = connectedComponentsWithStats(dst, labels, stats, centers, 8, CV_32S);
-
+    int label;
     // skip background i=0
     for (int j=1; j< nLabels;j++) {
       // get stats
@@ -128,14 +132,26 @@ int main(int argc, char* argv[]){
         h = stats.at<int>(j,CC_STAT_HEIGHT);
         // w/h >= 0.7 && h/w >= 0.7 the bounding box of a circle is roughly a square.
         if((h/ double(w)) >=0.7 && (w/ double(h)) >=0.7) {
-          // The bounding box contains an ellipse and the visible points should be at least 30% of that area.
-          if(area/(M_PI * (0.5*w) * (0.5*h)) >= 0.3) {
-            x = centers.at<double>(j,0);
-            y = centers.at<double>(j,1);
-            fs << i <<","<< i/fps <<","<< 0.25*(w+h) <<","<< x <<","<< y << "\n";
-            // printf("%d: Found cc%d at x=%f y=%f ",i, j, x, y);
-            // printf("with area=%d w=%d h=%d\n", area, w, h);
-          }
+            points.clear();
+            int bbX = stats.at<int>(j, CC_STAT_LEFT);
+            int bbY = stats.at<int>(j, CC_STAT_TOP);
+            for(int x = bbX; x < bbX + w; x++){
+              for(int y = bbY; y < bbY + h; y++){
+                // Mat::at(y,x) => Mat::at(Point(x,y)) see Docs.
+                label = labels.at<int>(y,x);
+                if(label == j){
+                  points.push_back(Point2i(x,y));
+                }
+              }
+            }
+            minEnclosingCircle(points, center, radius);
+            // Check that the points visible actually fill a circle.
+            // This filters out artefacts that are diagonal - thus forming a square.
+            if((area / (M_PI * radius * radius)) >= 0.5) {
+              fs << i <<","<< i/fps <<","<< radius <<","<< center.x <<","<< center.y << "\n";
+              // printf("%d: Found cc%d at x=%f y=%f ",i, j, center.x, center.y);
+              // printf("with points=%d r=%f area=%f\n", area, radius, (M_PI * radius * radius));
+            }
         }
       }
     }

@@ -8,9 +8,11 @@ df = readtable("out/positions.csv")
 
 mad(X) = mad(X, median(X))
 mad(X, med) = median([abs(x - med) for x in X])
+spread(X) = maximum(x) - minimum(X)
 
 median_r = median(df[:Radius])
 mad_r = mad(df[:Radius])
+σ_r = std(df[:Radius])
 
 # petri dish
 js = JSON.parsefile("out/petriDish.json")
@@ -35,10 +37,20 @@ radius(x, y) = √((x)^2 + (y)^2)
 df[:r] = map(radius, df[:x], df[:y])
 df[:ϕ] = map((x, y) -> atan2(x,y), df[:x], df[:y])
 
-dfOld = df
 print("Recorded $(size(df, 1)) data points")
 # Remove all points that are probably bogus
-cond = median_r - mad_r .<= df[:Radius] .<= median_r + mad_r
+# cond = median_r - 2σ_r .<= df[:Radius] .<= median_r + 2σ_r
+
+duplicates = Int64[]
+for subdf in groupby(df, :Frame)
+    if size(subdf, 1) > 1
+        push!(duplicates, subdf[1,:Frame])
+    end
+end
+
+cond = Bool[x ∉ duplicates for x in df[:Frame]]
+
+dfDiscarded = sub(df, !cond)
 df = sub(df, cond)
 print(" $(size(df, 1)) of them are valid and")
 # remove all points that are in the influence of the border
