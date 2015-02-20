@@ -4,7 +4,8 @@ using JSON
 Base.convert(::Type{Float64}, ::NAtype) = NaN
 using Gadfly
 
-df = readtable("out/positions.csv")
+df = readtable("$folder/$fileN")
+dfOld = df
 
 mad(X) = mad(X, median(X))
 mad(X, med) = median([abs(x - med) for x in X])
@@ -15,7 +16,7 @@ mad_r = mad(df[:Radius])
 σ_r = std(df[:Radius])
 
 # petri dish
-js = JSON.parsefile("out/petriDish.json")
+js = JSON.parsefile("$folder/petriDish.json")
 petriDish = js["Circle 0"]
 pR = petriDish["radius"]
 px = petriDish["x"]
@@ -100,8 +101,8 @@ end
 
 dfVA = v_a(df)
 dfValidVA = v_a(dfValid)
-writetable("out/va.csv", dfVA)
-writetable("out/vaFiltered.csv", dfValidVA)
+writetable("$folder/va.csv", dfVA)
+writetable("$folder/vaFiltered.csv", dfValidVA)
 
 function mean_windowed_frames(df, id, c, Δ)
   r = 1:Δ:size(df, 1)
