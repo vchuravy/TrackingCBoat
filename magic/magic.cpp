@@ -127,7 +127,7 @@ int main(int argc, char* argv[]){
     for (int j=1; j< nLabels;j++) {
       // get stats
       area = stats.at<int>(j,CC_STAT_AREA);
-      if(area >= 20) {
+      if(area >= 80 && area <= 180) {
         w = stats.at<int>(j,CC_STAT_WIDTH);
         h = stats.at<int>(j,CC_STAT_HEIGHT);
         // w/h >= 0.7 && h/w >= 0.7 the bounding box of a circle is roughly a square.
