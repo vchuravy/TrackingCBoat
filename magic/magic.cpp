@@ -148,7 +148,8 @@ int main(int argc, char* argv[]){
             // Check that the points visible actually fill a circle.
             // This filters out artefacts that are diagonal - thus forming a square.
             if((area / (M_PI * radius * radius)) >= 0.5) {
-              fs << i <<","<< i/fps <<","<< radius <<","<< center.x <<","<< center.y << "\n";
+              // take centroid of bb instead of fitted circle.
+              fs << i <<","<< i/fps <<","<< radius <<","<< centers.at<double>(j,0) <<","<< centers.at<double>(j,1) << "\n";
               // printf("%d: Found cc%d at x=%f y=%f ",i, j, center.x, center.y);
               // printf("with points=%d r=%f area=%f\n", area, radius, (M_PI * radius * radius));
             }
