@@ -41,7 +41,7 @@ int main(int argc, char* argv[]){
   // Background
   Mat background;
   cvtColor(in, background, COLOR_RGB2GRAY);
-  temp = background;
+  temp = background.clone();
 
   // Load circle
   std::ifstream infile(output + "/petriDish.txt");
@@ -56,6 +56,8 @@ int main(int argc, char* argv[]){
     tc.y = y;
     circles.push_back(tc);
   }
+
+  // fprintf(stderr, "Found circle r = %f, x = %f, y = %f \n",circles[0].z, circles[0].x, circles[0].y);
 
   //Create mask based on circles[0]
   Point2f center = Point2f(circles[0].x, circles[0].y);
@@ -130,7 +132,7 @@ int main(int argc, char* argv[]){
       }
     }
     std::cout << "\r" << i << "/" << frames;
-    // imwrite(output + "/test-"+ std::to_string(i)+".tiff", dst, imageout_params);
+    // imwrite(output + "/test-"+ std::to_string(i)+".tiff", dst);
     }
   }
 
