@@ -35,61 +35,34 @@ int main(int argc, char* argv[]){
   if(argc >= 5) {
     in = imread(argv[4]);
   } else {
-    cap >> in;
+    in = imread(output + "/bg.tiff");
   }
 
   // Background
   Mat background;
-  temp = in;
   cvtColor(in, background, COLOR_RGB2GRAY);
-  // threshold(background.clone(), background, 10, 255, THRESH_TOZERO); 
+  temp = background;
 
-  std::vector<Vec3f> circles;
+  // Load circle
+  std::ifstream infile(output + "/petriDish.txt");
+  std::vector<Point3f> circles;
 
-  /// Apply the Hough Transform to find the circles
-  HoughCircles(background, circles, HOUGH_GRADIENT, 1, 300, 200, 100, 0, 0);
-
-  /// Draw the circles detected
-  std::ofstream fsJs (output + "/petriDish.json", std::ofstream::out);
-  fsJs << "{\n";
-
-  Point2f center;
-  float radius;
-
-  for( size_t i = 0; i < circles.size(); i++ )
-  {
-      center = Point2f(circles[i][0], circles[i][1]);
-      radius = circles[i][2];
-      // circle center
-      circle(temp, center, 3, Scalar(0,255,0), -1, 8, 0 );
-      // circle outline
-      circle(temp, center, radius, Scalar(0,0,255), 3, 8, 0 );
-      printf("Circle %d with r=%f at x=%f, y=%f\n", i, radius, center.x, center.y);
-
-      fsJs << "\"Circle " << i << "\":";
-      fsJs << "{" << "\"radius\":" <<  radius << ",\"x\":" << center.x << ",\"y\":" << center.y << "}";
-      if(i + 1 < circles.size())
-        fsJs << ",\n";
-   }
-   fsJs << "\n}" << std::endl;
-   fsJs.close();
-
-  imshow("image", temp);
-  waitKey(0);
-  destroyWindow("image");
-
-  //Set image parameter
-  std::vector<int> imageout_params;
-  imwrite(output + "/bg_circle.tiff", temp, imageout_params);
-  imwrite(output + "/bg.tiff", background, imageout_params);
+  int c;
+  float radius, x, y;
+  while (infile >> c >> radius >> x >> y){
+    Point3f tc;
+    tc.z = radius;
+    tc.x = x;
+    tc.y = y;
+    circles.push_back(tc);
+  }
 
   //Create mask based on circles[0]
-  center = Point2f(circles[0][0], circles[0][1]);
-  radius = circles[0][2];
+  Point2f center = Point2f(circles[0].x, circles[0].y);
+  radius = circles[0].z;
   Mat mask = Mat::zeros(background.rows, background.cols, CV_8UC1);
   circle(mask, center, radius, Scalar(255,255,255), -1, 8, 0 ); //-1 means filled
 
-  GaussianBlur(background, temp, Size(3,3) , 3, 3, BORDER_DEFAULT);
   background = Mat::zeros(background.rows, background.cols, CV_8UC1);
   temp.copyTo(background, mask ); // copy values of temp to background if mask is > 0.
 

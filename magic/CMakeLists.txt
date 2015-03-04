@@ -15,4 +15,6 @@ endif()
 
 find_package(OpenCV REQUIRED)
 add_executable(Magic magic.cpp)
+add_executable(Prepare prepare.cpp)
 target_link_libraries(Magic ${OpenCV_LIBS})
+target_link_libraries(Prepare ${OpenCV_LIBS})
