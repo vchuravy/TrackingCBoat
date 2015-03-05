@@ -43,8 +43,10 @@ function v_a(df)
   end 
 
   r = DataFrame(t = df[:, :Time], vx = vx, vy = vy, ax = ax, ay = ay)
-  r[:v] = √(r[:vx].^2 .+ r[:vy].^2)
+  r[:s] = √(r[:vx].^2 .+ r[:vy].^2)
   r[:a] = √(r[:ax].^2 .+ r[:ay].^2)
+  r[:s_avg] = moving_avg(r[:s], 120) #at 30fps  => 4s
+  r[:a_avg] = moving_avg(r[:a], 120)
   return r
 end
 
@@ -101,10 +103,31 @@ function processData(folder, fileN)
   df, dfOld, dfVA, dfValidVA
 end
 
-function moving_avg(X :: DataArray)
+function moving_avg(X :: DataArray, window :: Integer)
   avg = similar(X, Float64)
-end
+  if isodd(window)
+    step = div(window - 1, 2)
+  else 
+    step = div(window, 2)
+  end
 
+  for i in 1:size(X,1)
+    if isna(X[i])
+      avg[i] = NA
+    else
+      sum = 0.0
+      n = 0
+      for j in i-step:i+step    
+        if (1 <= j <= size(X,1)) && (!isna(X[j]))
+          sum += X[j]
+          n += 1
+        end
+      end
+      avg[i] = sum / n
+    end
+  end
+  return avg
+end
 
 function mean_windowed_frames(df, id, c, Δ)
   r = 1:Δ:size(df, 1)
