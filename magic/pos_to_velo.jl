@@ -52,9 +52,7 @@ function processData(folder, fileN)
   df = readtable("$folder/$fileN")
   dfOld = df
 
-  median_r = median(df[:Radius])
-  mad_r = mad(df[:Radius])
-  σ_r = std(df[:Radius])
+  median_r = median(head(df[:Radius]))
 
   # petri dish
   pR, px, py = readdlm("$folder/petriDish.txt")[1, 2:end]
@@ -63,16 +61,16 @@ function processData(folder, fileN)
   ratioCboat = median_r/(0.5*cboatD)
 
   rInfluence = 3.5 #cm
-  rValid = pR - rInfluence*ratioCboat
+  rValid = pR/ratioCboat - rInfluence
 
   checkValid(x, y) = radius(x, y) < rValid
 
-  df[:x] = df[:x] - px 
-  df[:y] = df[:y] - py
+  df[:x] = (df[:x] - px)/ratioCboat 
+  df[:y] = (df[:y] - py)/ratioCboat
 
   #polar coordinates
-  df[:r] = map(radius, df[:x], df[:y])
-  df[:ϕ] = map((x, y) -> atan2(x,y), df[:x], df[:y])
+  # df[:r] = map(radius, df[:x], df[:y])
+  # df[:ϕ] = map((x, y) -> atan2(x,y), df[:x], df[:y])
 
   print("Recorded $(size(df, 1)) data points")
   # Remove all points that are probably bogus
