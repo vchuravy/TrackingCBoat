@@ -3,56 +3,10 @@ using DataFrames
 Base.convert(::Type{Float64}, ::NAtype) = NaN
 using Gadfly
 
-df = readtable("$folder/$fileN")
-dfOld = df
-
 mad(X) = mad(X, median(X))
 mad(X, med) = median([abs(x - med) for x in X])
 spread(X) = maximum(x) - minimum(X)
-
-median_r = median(df[:Radius])
-mad_r = mad(df[:Radius])
-σ_r = std(df[:Radius])
-
-# petri dish
-pR, px, py = readdlm("$folder/petriDish.txt")[1, 2:end]
-pDcm = 25 # cm
-cboatD = 0.3 #cm
-ratioCboat = median_r/(0.5*cboatD)
-
-rInfluence = 3.5
-rValid = pR - rInfluence*ratioCboat
-
-checkValid(x, y) = radius(x, y) < rValid
-
-df[:x] = df[:x] - px 
-df[:y] = df[:y] - py
-
 radius(x, y) = √((x)^2 + (y)^2)
-#polar coordinates
-df[:r] = map(radius, df[:x], df[:y])
-df[:ϕ] = map((x, y) -> atan2(x,y), df[:x], df[:y])
-
-print("Recorded $(size(df, 1)) data points")
-# Remove all points that are probably bogus
-# cond = median_r - 2σ_r .<= df[:Radius] .<= median_r + 2σ_r
-
-duplicates = Int64[]
-for subdf in groupby(df, :Frame)
-    if size(subdf, 1) > 1
-        push!(duplicates, subdf[1,:Frame])
-    end
-end
-
-cond = Bool[x ∉ duplicates for x in df[:Frame]]
-
-dfDiscarded = sub(df, !cond)
-df = sub(df, cond)
-print(" $(size(df, 1)) of them are valid and")
-# remove all points that are in the influence of the border
-dfValid = sub(df, map(checkValid, df[:x], df[:y]))
-println(" $(size(dfValid, 1)) are outside the influence of the boundary.")
-# plot(df, x = :x, y = :y)
 
 function v_a(df)
   vx = DataArray(Float64, size(df, 1))
@@ -94,10 +48,65 @@ function v_a(df)
   return r
 end
 
-dfVA = v_a(df)
-dfValidVA = v_a(dfValid)
-writetable("$folder/va.csv", dfVA)
-writetable("$folder/vaFiltered.csv", dfValidVA)
+function processData(folder, fileN)
+  df = readtable("$folder/$fileN")
+  dfOld = df
+
+  median_r = median(df[:Radius])
+  mad_r = mad(df[:Radius])
+  σ_r = std(df[:Radius])
+
+  # petri dish
+  pR, px, py = readdlm("$folder/petriDish.txt")[1, 2:end]
+  pDcm = 25 # cm
+  cboatD = 0.3 #cm
+  ratioCboat = median_r/(0.5*cboatD)
+
+  rInfluence = 3.5 #cm
+  rValid = pR - rInfluence*ratioCboat
+
+  checkValid(x, y) = radius(x, y) < rValid
+
+  df[:x] = df[:x] - px 
+  df[:y] = df[:y] - py
+
+  #polar coordinates
+  df[:r] = map(radius, df[:x], df[:y])
+  df[:ϕ] = map((x, y) -> atan2(x,y), df[:x], df[:y])
+
+  print("Recorded $(size(df, 1)) data points")
+  # Remove all points that are probably bogus
+  # cond = median_r - 2σ_r .<= df[:Radius] .<= median_r + 2σ_r
+
+  duplicates = Int64[]
+  for subdf in groupby(df, :Frame)
+      if size(subdf, 1) > 1
+          push!(duplicates, subdf[1,:Frame])
+      end
+  end
+
+  cond = Bool[x ∉ duplicates for x in df[:Frame]]
+
+  dfDiscarded = sub(df, !cond)
+  df = sub(df, cond)
+  print(" $(size(df, 1)) of them are valid and")
+  # remove all points that are in the influence of the border
+  dfValid = sub(df, map(checkValid, df[:x], df[:y]))
+  println(" $(size(dfValid, 1)) are outside the influence of the boundary.")
+  # plot(df, x = :x, y = :y)
+
+  dfVA = v_a(df)
+  dfValidVA = v_a(dfValid)
+  writetable("$folder/va.csv", dfVA)
+  writetable("$folder/vaFiltered.csv", dfValidVA)
+
+  df, dfOld, dfVA, dfValidVA
+end
+
+function moving_avg(X :: DataArray)
+  avg = similar(X, Float64)
+end
+
 
 function mean_windowed_frames(df, id, c, Δ)
   r = 1:Δ:size(df, 1)
